@@ -1,0 +1,23 @@
+# Dependencias do Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Conteudo web copiado por scripts/build-web.mjs
+/www/
+
+# Saidas comuns de ferramentas
+coverage/
+*.log
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Arquivos locais do Android/Gradle (as regras de build e SDK tambem estao em android/.gitignore)
+android/local.properties
+android/.gradle/
+android/**/build/

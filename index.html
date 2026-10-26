@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10131b">
+  <meta name="description" content="A clean, responsive calculator for everyday math.">
+  <title>Simple Calculator Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="page-shell">
+    <section class="calculator" aria-label="Calculator">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Simple Calculator home">
+          <span class="brand-mark" aria-hidden="true">∑</span>
+          <span>simple<span class="brand-light">calc</span></span>
+          <span class="version">v2</span>
+        </a>
+        <button class="icon-button theme-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42m-9.88 9.88-1.42 1.42M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+        </button>
+      </header>
+
+      <div class="display" aria-live="polite" aria-atomic="true">
+        <div class="display-meta"><span id="status-label">READY</span><span class="live-dot" aria-hidden="true"></span></div>
+        <div class="expression" id="expression" aria-label="Expression">0</div>
+        <div class="result" id="result" aria-label="Result">&nbsp;</div>
+      </div>
+
+      <div class="utility-row">
+        <button class="expand-button" id="expand-toggle" type="button" aria-expanded="false" aria-controls="extra-keys">
+          <svg class="expand-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+          <span>More functions</span>
+        </button>
+        <span class="keyboard-hint">Keyboard enabled <kbd>↵</kbd></span>
+      </div>
+      <div class="extra-keys" id="extra-keys" hidden aria-label="Extra functions"></div>
+      <div class="keypad" id="keypad" aria-label="Calculator keys"></div>
+      <footer class="footer"><span>Made for the everyday math</span><span class="footer-orb" aria-hidden="true"></span></footer>
+    </section>
+    <p class="page-note">A little space to think clearly.</p>
+  </main>
+</body>
+</html>
