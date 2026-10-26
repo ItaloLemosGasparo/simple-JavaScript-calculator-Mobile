@@ -137,38 +137,47 @@ function evaluate(source) {
   function primary() {
     if (peek() === '+' || peek() === '-') {
       const sign = consume() === '-' ? -1 : 1;
-      return sign * primary();
+      return { value: sign * primary().value, isPercent: false };
     }
     if (peek() === '(') {
       consume();
       const value = sum();
       if (consume() !== ')') throw new Error('Unclosed parenthesis');
-      return value;
+      return { value, isPercent: false };
     }
     const token = consume();
     if (!token || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(token)) throw new Error('Expected a number');
     let value = Number(token);
+    let isPercent = false;
     if (peek() === '%') {
       consume();
       value /= 100;
+      isPercent = true;
     }
-    return value;
+    return { value, isPercent };
   }
   function product() {
-    let value = primary();
+    let result = primary();
     while (peek() === '*' || peek() === '/') {
       const operator = consume();
-      const right = primary();
-      value = operator === '*' ? value * right : value / right;
+      const right = primary().value;
+      result = {
+        value: operator === '*' ? result.value * right : result.value / right,
+        isPercent: false
+      };
     }
-    return value;
+    return result;
   }
   function sum() {
-    let value = product();
+    let value = product().value;
     while (peek() === '+' || peek() === '-') {
       const operator = consume();
+      // In addition/subtraction, a percent is relative to the running total:
+      // 100 + 10% means 100 + (100 * 0.10). In multiplication/division,
+      // percent remains a fraction (for example, 200 * 10% = 20).
       const right = product();
-      value = operator === '+' ? value + right : value - right;
+      const adjustedRight = right.isPercent ? value * right.value : right.value;
+      value = operator === '+' ? value + adjustedRight : value - adjustedRight;
     }
     return value;
   }
