@@ -134,50 +134,43 @@ function evaluate(source) {
   const peek = () => tokens[position];
   const consume = () => tokens[position++];
 
-  function primary() {
+  function primary(percentBase) {
     if (peek() === '+' || peek() === '-') {
       const sign = consume() === '-' ? -1 : 1;
-      return { value: sign * primary().value, isPercent: false };
+      return sign * primary(percentBase);
     }
     if (peek() === '(') {
       consume();
       const value = sum();
       if (consume() !== ')') throw new Error('Unclosed parenthesis');
-      return { value, isPercent: false };
+      return value;
     }
     const token = consume();
     if (!token || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(token)) throw new Error('Expected a number');
     let value = Number(token);
-    let isPercent = false;
     if (peek() === '%') {
       consume();
-      value /= 100;
-      isPercent = true;
+      value = (percentBase ?? 1) * value / 100;
     }
-    return { value, isPercent };
+    return value;
   }
-  function product() {
-    let result = primary();
+  function product(leadingPercentBase) {
+    let result = primary(leadingPercentBase);
     while (peek() === '*' || peek() === '/') {
       const operator = consume();
-      const right = primary().value;
-      result = {
-        value: operator === '*' ? result.value * right : result.value / right,
-        isPercent: false
-      };
+      const right = primary();
+      result = operator === '*' ? result * right : result / right;
     }
     return result;
   }
   function sum() {
-    let value = product().value;
+    let value = product();
     while (peek() === '+' || peek() === '-') {
       const operator = consume();
-      // In addition/subtraction, a percent is relative to the running total:
-      // 100 + 10% means 100 + (100 * 0.10). In multiplication/division,
-      // percent remains a fraction (for example, 200 * 10% = 20).
-      const right = product();
-      const adjustedRight = right.isPercent ? value * right.value : right.value;
-      value = operator === '+' ? value + adjustedRight : value - adjustedRight;
+      // A leading percentage on the right side of + or - uses the running
+      // total as its base, even when that percentage is then multiplied.
+      const right = product(value);
+      value = operator === '+' ? value + right : value - right;
     }
     return value;
   }

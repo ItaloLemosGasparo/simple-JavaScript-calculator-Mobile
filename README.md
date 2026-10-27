@@ -118,7 +118,7 @@ For Gradle errors, JDK or Android SDK paths, and UP-TO-DATE messages, see [Build
 ## Calculator behavior
 
 - Division by zero is shown as an undefined result.
-- 25% is equivalent to 0.25; for multiplication, 200 * 10% evaluates to 20.
-- For addition and subtraction, the percentage is applied to the running total: 100 + 100% evaluates to 200, and 100 - 10% evaluates to 90.
+- A percentage after `+` or `-` uses the running total as its base, including when followed by multiplication: `200 + 50% * -(1)` evaluates to `100`.
+- For direct multiplication, a percentage remains a fraction: `200 * 10%` evaluates to `20`.
 - The Android application ID is com.simplecalc.mobile.
 - simple-JavaScript-calculator V2 is a separate version; make changes for this Mobile version in this project only.
