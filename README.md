@@ -116,6 +116,8 @@ To log pointer, touch, and click events while testing in a browser, open the cal
 - style.css: responsive layout, keys, themes, and motion preferences.
 - script.js: keypad, input, preview, history, and interface event handling.
 - calculator-core.mjs: pure arithmetic parser and number formatting.
+- calculator-state.mjs: calculator state transitions and commands, independent of the DOM.
+- history-store.mjs: history persistence and the 50-entry limit, with injectable storage.
 - input-debug.mjs: optional pointer/touch/click diagnostics and log download.
 - scripts/build-web.mjs: recreates www/ from the web source files in the project root.
 - www/: web content prepared for Capacitor; recreated during sync.
