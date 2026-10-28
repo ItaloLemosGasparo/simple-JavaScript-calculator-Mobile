@@ -4,6 +4,25 @@ const statusLabel = document.querySelector('#status-label');
 const keypad = document.querySelector('#keypad');
 const extraKeys = document.querySelector('#extra-keys');
 const expandToggle = document.querySelector('#expand-toggle');
+const historyToggle = document.querySelector('#history-toggle');
+const historyPanel = document.querySelector('#history-panel');
+const historyList = document.querySelector('#history-list');
+const historyEmpty = document.querySelector('#history-empty');
+const historyClear = document.querySelector('#history-clear');
+
+const HISTORY_STORAGE_KEY = 'simple-calculator-mobile-history';
+const HISTORY_LIMIT = 50;
+let historyEntries = [];
+try {
+  const savedHistory = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+  if (Array.isArray(savedHistory)) {
+    historyEntries = savedHistory
+      .filter((entry) => entry && typeof entry.expression === 'string' && typeof entry.result === 'string')
+      .slice(0, HISTORY_LIMIT);
+  }
+} catch {
+  // Keep the calculator usable when storage is unavailable or contains invalid data.
+}
 
 const mainKeys = [
   { label: 'AC', action: 'clear', kind: 'utility' },
@@ -53,6 +72,63 @@ function render() {
 
 function formatNumber(number) {
   return Number(number.toPrecision(10)).toString();
+}
+
+function saveHistory() {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyEntries));
+  } catch {
+    // The history still works for the current session if persistent storage is unavailable.
+  }
+}
+
+function renderHistory() {
+  historyList.replaceChildren();
+  historyEmpty.hidden = historyEntries.length > 0;
+  historyClear.disabled = historyEntries.length === 0;
+
+  historyEntries.forEach((entry, index) => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const useButton = document.createElement('button');
+    useButton.type = 'button';
+    useButton.className = 'history-use';
+    useButton.setAttribute('aria-label', `${entry.expression} equals ${entry.result}. Use result`);
+
+    const source = document.createElement('span');
+    source.className = 'history-expression';
+    source.textContent = entry.expression;
+    const result = document.createElement('span');
+    result.className = 'history-result';
+    result.textContent = `= ${entry.result}`;
+    useButton.append(source, result);
+    useButton.addEventListener('click', () => {
+      expression = entry.result;
+      justCalculated = true;
+      historyPanel.hidden = true;
+      historyToggle.setAttribute('aria-expanded', 'false');
+      render();
+    });
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'history-delete';
+    deleteButton.setAttribute('aria-label', `Delete calculation ${entry.expression} equals ${entry.result}`);
+    deleteButton.textContent = '×';
+    deleteButton.addEventListener('click', () => {
+      historyEntries.splice(index, 1);
+      saveHistory();
+      renderHistory();
+    });
+    item.append(useButton, deleteButton);
+    historyList.append(item);
+  });
+}
+
+function addHistoryEntry(source, value) {
+  historyEntries.unshift({ expression: formatExpression(source), result: formatNumber(value) });
+  historyEntries = historyEntries.slice(0, HISTORY_LIMIT);
+  saveHistory();
+  renderHistory();
 }
 
 function enter(value) {
@@ -114,8 +190,11 @@ function runAction(action) {
       const value = evaluate(expression);
       if (value === null) return;
       if (!Number.isFinite(value)) throw new Error('Cannot divide by zero');
+      const completedExpression = expression;
+      const wasAlreadyResult = justCalculated;
       expression = formatNumber(value);
       justCalculated = true;
+      if (!wasAlreadyResult) addHistoryEntry(completedExpression, value);
     } catch (error) {
       statusLabel.textContent = error.message === 'Cannot divide by zero' ? 'UNDEFINED' : 'CHECK EXPRESSION';
       resultDisplay.textContent = '\u00a0';
@@ -187,12 +266,31 @@ expandToggle.addEventListener('click', () => {
   expandToggle.querySelector('span').textContent = expanded ? 'More functions' : 'Fewer functions';
 });
 
+historyToggle.addEventListener('click', () => {
+  const expanded = historyToggle.getAttribute('aria-expanded') === 'true';
+  historyToggle.setAttribute('aria-expanded', String(!expanded));
+  historyPanel.hidden = expanded;
+});
+
+historyClear.addEventListener('click', () => {
+  historyEntries = [];
+  saveHistory();
+  renderHistory();
+});
+
 document.querySelector('#theme-toggle').addEventListener('click', () => {
   document.body.classList.toggle('light-theme');
 });
 
 document.addEventListener('keydown', (event) => {
   if (event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.key === 'Escape' && !historyPanel.hidden) {
+    historyPanel.hidden = true;
+    historyToggle.setAttribute('aria-expanded', 'false');
+    event.preventDefault();
+    return;
+  }
+  if (!historyPanel.hidden) return;
   if (/^[0-9.]$/.test(event.key)) enter(event.key);
   else if ('+-*/%()'.includes(event.key)) enter(event.key);
   else if (event.key === 'Enter' || event.key === '=') runAction('calculate');
@@ -202,4 +300,5 @@ document.addEventListener('keydown', (event) => {
   event.preventDefault();
 });
 
+renderHistory();
 render();

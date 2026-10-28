@@ -8,6 +8,7 @@ A responsive calculator built with HTML, CSS, and JavaScript. It can run in a br
 - Live result preview as you type.
 - Implicit multiplication: 2(3 + 4) evaluates to 14.
 - Light and dark themes, physical keyboard support, clear, delete, and change-sign buttons.
+- A calculation history that keeps the 50 most recent completed calculations on the device; select an entry to reuse its result, delete entries individually, or clear the entire history.
 - A custom arithmetic parser; expressions are not executed as JavaScript.
 
 ## Try it in a browser

@@ -17,6 +17,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Instrucoes locais do Codex/agents
+AGENTS.md
+
 # Arquivos locais do Android/Gradle (as regras de build e SDK tambem estao em android/.gitignore)
 android/local.properties
 android/.gradle/
