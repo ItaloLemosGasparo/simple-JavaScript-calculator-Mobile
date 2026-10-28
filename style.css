@@ -68,6 +68,9 @@ kbd { margin-left: 4px; padding: 2px 5px; border: 1px solid var(--line); border-
 .key.equals:hover { background: #b3efd4; }
 .key.extra-key { color: var(--accent); background: rgba(156, 226, 194, .08); }
 .footer { justify-content: center; gap: 9px; margin-top: 19px; color: var(--muted); font-size: 9px; letter-spacing: .2px; }
+.debug-download { padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: transparent; font: inherit; font-size: 9px; cursor: pointer; }
+.debug-download:hover { color: var(--accent); background: var(--key); }
+.debug-download:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .footer-orb { width: 4px; height: 4px; }
 .page-note { margin: 18px 0 0; color: #747b89; font-size: 11px; letter-spacing: .3px; text-align: center; }
 body.light-theme {

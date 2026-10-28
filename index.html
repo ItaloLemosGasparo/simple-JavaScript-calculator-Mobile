@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <script type="module" src="script.js"></script>
 </head>
 <body>
   <main class="page-shell">
@@ -52,7 +52,7 @@
         </section>
       </div>
       <div class="keypad" id="keypad" aria-label="Calculator keys"></div>
-      <footer class="footer"><span>Made for the everyday math</span><span class="footer-orb" aria-hidden="true"></span></footer>
+      <footer class="footer"><span>Made for the everyday math</span><span class="footer-orb" aria-hidden="true"></span><button class="debug-download" id="input-log-download" type="button" hidden>Download input log</button></footer>
     </section>
     <p class="page-note">A little space to think clearly.</p>
   </main>

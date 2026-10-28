@@ -1,3 +1,6 @@
+import { evaluate, formatNumber } from './calculator-core.mjs';
+import { createInputDiagnostics } from './input-debug.mjs';
+
 const expressionDisplay = document.querySelector('#expression');
 const resultDisplay = document.querySelector('#result');
 const statusLabel = document.querySelector('#status-label');
@@ -9,10 +12,16 @@ const historyPanel = document.querySelector('#history-panel');
 const historyList = document.querySelector('#history-list');
 const historyEmpty = document.querySelector('#history-empty');
 const historyClear = document.querySelector('#history-clear');
+const inputDiagnostics = createInputDiagnostics(document.querySelector('#input-log-download'));
 
 const HISTORY_STORAGE_KEY = 'simple-calculator-mobile-history';
 const HISTORY_LIMIT = 50;
+const TOUCH_CLICK_SUPPRESSION_MS = 1500;
 let historyEntries = [];
+const touchKeyAnimations = new WeakMap();
+const handledTouchPointers = new Map();
+let touchPointerToken = 0;
+
 try {
   const savedHistory = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
   if (Array.isArray(savedHistory)) {
@@ -44,7 +53,26 @@ function makeButton({ label, value, action, kind = '', aria }) {
   button.className = `key ${kind}`.trim();
   button.textContent = label;
   button.setAttribute('aria-label', aria || label);
-  button.addEventListener('click', () => action ? runAction(action) : enter(value));
+  button.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch' || !event.isPrimary) return;
+    animateTouchKey(button);
+    if (action === 'calculate') return;
+    const token = ++touchPointerToken;
+    handledTouchPointers.set(event.pointerId, token);
+    // Android can emit a click after pointercancel, so keep suppression through the full tap sequence.
+    setTimeout(() => {
+      if (handledTouchPointers.get(event.pointerId) === token) handledTouchPointers.delete(event.pointerId);
+    }, TOUCH_CLICK_SUPPRESSION_MS);
+    activateKey(action, value, event, 'pointerdown');
+  });
+  button.addEventListener('click', (event) => {
+    if (handledTouchPointers.has(event.pointerId) && (event.pointerType === 'touch' || !event.pointerType && event.detail > 0)) {
+      handledTouchPointers.delete(event.pointerId);
+      inputDiagnostics.log(event, { phase: 'pointerdown-click-suppressed', value });
+      return;
+    }
+    activateKey(action, value, event, 'click');
+  });
   return button;
 }
 
@@ -70,8 +98,28 @@ function render() {
   expressionDisplay.scrollLeft = expressionDisplay.scrollWidth;
 }
 
-function formatNumber(number) {
-  return Number(number.toPrecision(10)).toString();
+function activateKey(action, value, event, trigger) {
+  inputDiagnostics.log(event, { phase: 'calculator-handler', trigger, action: action || 'enter', value });
+  if (action) runAction(action);
+  else enter(value);
+  inputDiagnostics.log(event, { phase: 'calculator-state', trigger, expression });
+}
+
+function animateTouchKey(button) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  touchKeyAnimations.get(button)?.cancel();
+  const animation = button.animate(
+    [
+      { transform: 'scale(.94)', filter: 'brightness(1.05)' },
+      { transform: 'scale(1.03)', filter: 'brightness(1.3)', offset: 0.3 },
+      { transform: 'scale(1)', filter: 'brightness(1)' }
+    ],
+    { duration: 260, easing: 'ease-out' }
+  );
+  touchKeyAnimations.set(button, animation);
+  animation.onfinish = () => {
+    if (touchKeyAnimations.get(button) === animation) touchKeyAnimations.delete(button);
+  };
 }
 
 function saveHistory() {
@@ -205,60 +253,6 @@ function runAction(action) {
 }
 
 // Recursive descent parser: supports +, −, ×, ÷, parentheses, unary signs, and postfix percent.
-function evaluate(source) {
-  if (!source || !source.trim()) return null;
-  const tokens = source.match(/\d+(?:\.\d*)?|\.\d+|[()+\-*/%]/g) || [];
-  if (tokens.join('') !== source.replace(/\s/g, '')) throw new Error('Invalid expression');
-  let position = 0;
-  const peek = () => tokens[position];
-  const consume = () => tokens[position++];
-
-  function primary(percentBase) {
-    if (peek() === '+' || peek() === '-') {
-      const sign = consume() === '-' ? -1 : 1;
-      return sign * primary(percentBase);
-    }
-    if (peek() === '(') {
-      consume();
-      const value = sum();
-      if (consume() !== ')') throw new Error('Unclosed parenthesis');
-      return value;
-    }
-    const token = consume();
-    if (!token || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(token)) throw new Error('Expected a number');
-    let value = Number(token);
-    if (peek() === '%') {
-      consume();
-      value = (percentBase ?? 1) * value / 100;
-    }
-    return value;
-  }
-  function product(leadingPercentBase) {
-    let result = primary(leadingPercentBase);
-    while (peek() === '*' || peek() === '/') {
-      const operator = consume();
-      const right = primary();
-      result = operator === '*' ? result * right : result / right;
-    }
-    return result;
-  }
-  function sum() {
-    let value = product();
-    while (peek() === '+' || peek() === '-') {
-      const operator = consume();
-      // A leading percentage on the right side of + or - uses the running
-      // total as its base, even when that percentage is then multiplied.
-      const right = product(value);
-      value = operator === '+' ? value + right : value - right;
-    }
-    return value;
-  }
-
-  const result = sum();
-  if (position !== tokens.length) throw new Error('Unexpected input');
-  return result;
-}
-
 expandToggle.addEventListener('click', () => {
   const expanded = expandToggle.getAttribute('aria-expanded') === 'true';
   expandToggle.setAttribute('aria-expanded', String(!expanded));

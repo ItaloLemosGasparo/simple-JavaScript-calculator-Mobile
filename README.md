@@ -89,7 +89,7 @@ Always run this command from the project root:
 
 The command runs two steps:
 
-1. android:sync prepares the current index.html, style.css, and script.js files in www/, then syncs them into the Android project through Capacitor.
+1. android:sync prepares the current web source files in www/, then syncs them into the Android project through Capacitor.
 2. Gradle runs assembleDebug and creates the debug APK.
 
 If you notive that the build is not generating a updated APK, run the Sync manually.
@@ -106,12 +106,18 @@ The debug APK is for development and testing; distribution requires configuring 
 
 For Gradle errors, JDK or Android SDK paths, and UP-TO-DATE messages, see [Build troubleshooting](docs/build-troubleshooting.md).
 
+### Inspecting missed keypad taps
+
+To log pointer, touch, and click events while testing in a browser, open the calculator with `?debugInput=1`, for example `http://localhost:8000/?debugInput=1`. The console logs the event sequence and whether the calculator processed the key; a **Download input log** button saves the recent records as JSON. Touch keypad keys are processed on `pointerdown` except `=`, which waits for a complete click; the following touch-generated click is logged as `pointerdown-click-suppressed` and ignored. Mouse and keyboard input still use clicks. In the developer console, use `window.setCalculatorInputDebug(true)` to enable logging and show the download button, or inspect the records directly in `window.__CALC_INPUT_LOG__`.
+
 ## Project structure
 
 - index.html: page structure and accessible calculator regions.
 - style.css: responsive layout, keys, themes, and motion preferences.
-- script.js: keypad, input, preview, and arithmetic parser.
-- scripts/build-web.mjs: recreates www/ from the web files in the project root.
+- script.js: keypad, input, preview, history, and interface event handling.
+- calculator-core.mjs: pure arithmetic parser and number formatting.
+- input-debug.mjs: optional pointer/touch/click diagnostics and log download.
+- scripts/build-web.mjs: recreates www/ from the web source files in the project root.
 - www/: web content prepared for Capacitor; recreated during sync.
 - capacitor.config.json: app name, identifier, and web directory.
 - android/: native Android project and Gradle configuration.
